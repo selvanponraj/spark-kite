@@ -143,7 +143,7 @@ class SparkKiteSpec extends WordSpec with MustMatchers with BeforeAndAfterAll wi
 
       val datasetURI = URIBuilder.build(s"repo:file:////${System.getProperty("user.dir")}/tmp", "test", "persons")
 
-      val descriptor = new DatasetDescriptor.Builder().schema(classOf[Person]).format(Formats.PARQUET).build()
+      val descriptor = new DatasetDescriptor.Builder().schema(classOf[Person]).format(Formats.AVRO).build()
 
       val peopleDataset = Datasets.create[Person, Dataset[Person]](datasetURI, descriptor, classOf[Person])
 
