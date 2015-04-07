@@ -1,3 +1,6 @@
+import de.heikoseeberger.sbtheader.HeaderPattern
+import de.heikoseeberger.sbtheader.license.Apache2_0
+
 name := "spark-cdh5-template"
 
 version := "1.0"
@@ -59,7 +62,7 @@ libraryDependencies ++= Seq(
   "org.kitesdk" % "kite-data-mapreduce" % kiteVersion % "compile",
   "com.databricks" % "spark-avro_2.10" % sparkAvroVersion % "compile" excludeAll ExclusionRule(organization = "org.apache.avro"),
   "org.apache.avro" % "avro" % avroVersion % "compile" exclude("org.mortbay.jetty", "servlet-api") exclude("io.netty", "netty") exclude("org.apache.avro", "avro-ipc") exclude("org.mortbay.jetty", "jetty"),
-  "org.apache.avro" % "avro-mapred" % avroVersion % "compile" classifier("hadoop2") exclude("org.mortbay.jetty", "servlet-api") exclude("io.netty", "netty") exclude("org.apache.avro", "avro-ipc") exclude("org.mortbay.jetty", "jetty"),
+  "org.apache.avro" % "avro-mapred" % avroVersion % "compile" classifier "hadoop2" exclude("org.mortbay.jetty", "servlet-api") exclude("io.netty", "netty") exclude("org.apache.avro", "avro-ipc") exclude("org.mortbay.jetty", "jetty"),
   "org.apache.hadoop" % "hadoop-client" % hadoopVersion % "compile" excludeAll ExclusionRule("javax.servlet")
 )
 
@@ -69,9 +72,21 @@ fork := true //http://stackoverflow.com/questions/27824281/sparksql-missingrequi
 
 parallelExecution in Test := false
 
+headers := Map(
+  "scala" -> (HeaderPattern.cStyleBlockComment, Apache2_0("2015", "David Greco")._2),
+  "conf"  -> (HeaderPattern.hashLineComment, Apache2_0("2015", "David Greco")._2)
+)
+
+evictionWarningOptions in update := EvictionWarningOptions.default
+  .withWarnTransitiveEvictions(warnTransitiveEvictions = false)
+  .withWarnDirectEvictions(warnDirectEvictions = false)
+  .withWarnScalaVersionEviction(warnScalaVersionEviction = false)
+
 lazy val root = (project in file(".")).
   configs(IntegrationTest).
   settings(Defaults.itSettings: _*).
   settings(
     libraryDependencies += "org.scalatest" % "scalatest_2.10" % scalaTestVersion % "it,test"
-  )
+  ).enablePlugins(AutomateHeaderPlugin)
+
+AutomateHeaderPlugin.automateFor(IntegrationTest)
