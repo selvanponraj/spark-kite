@@ -31,8 +31,8 @@ trait TestSupport {
     ()
   }
 
-  protected def generateDataset(format: Format) = {
-    val descriptor = new DatasetDescriptor.Builder().schemaUri("resource:product.avsc").compressionType(CompressionType.Snappy).format(format).build() //Snappy compression is the default
+  protected def generateDataset(format: Format, compressionType: CompressionType) = {
+    val descriptor = new DatasetDescriptor.Builder().schemaUri("resource:product.avsc").compressionType(compressionType).format(format).build() //Snappy compression is the default
     val products = Datasets.create[GenericRecord, Dataset[GenericRecord]](s"dataset:file://${System.getProperty("user.dir")}/tmp/test/products", descriptor, classOf[GenericRecord])
     val writer = products.newWriter()
     val builder = new GenericRecordBuilder(descriptor.getSchema)

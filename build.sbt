@@ -1,13 +1,32 @@
+/*
+ * Copyright 2015 David Greco
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import de.heikoseeberger.sbtheader.HeaderPattern
 import de.heikoseeberger.sbtheader.license.Apache2_0
+import sbt._
 
-name := "spark-cdh5-template"
+name := "spark-kite"
 
-version := "1.0"
+version in ThisBuild := "1.0"
 
 scalaVersion := "2.10.5"
 
-ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
+ivyScala := ivyScala.value map {
+  _.copy(overrideScalaVersion = true)
+}
 
 scalariformSettings
 
@@ -60,34 +79,46 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-yarn" % sparkVersion % "compile" excludeAll ExclusionRule(organization = "org.apache.hadoop"),
   "org.kitesdk" % "kite-data-core" % kiteVersion % "compile",
   "org.kitesdk" % "kite-data-mapreduce" % kiteVersion % "compile",
-  "com.databricks" % "spark-avro_2.10" % sparkAvroVersion % "compile" excludeAll ExclusionRule(organization = "org.apache.avro"),
+  "com.databricks" %% "spark-avro" % sparkAvroVersion % "compile" excludeAll ExclusionRule(organization = "org.apache.avro"),
   "org.apache.avro" % "avro" % avroVersion % "compile" exclude("org.mortbay.jetty", "servlet-api") exclude("io.netty", "netty") exclude("org.apache.avro", "avro-ipc") exclude("org.mortbay.jetty", "jetty"),
   "org.apache.avro" % "avro-mapred" % avroVersion % "compile" classifier "hadoop2" exclude("org.mortbay.jetty", "servlet-api") exclude("io.netty", "netty") exclude("org.apache.avro", "avro-ipc") exclude("org.mortbay.jetty", "jetty"),
-  "org.apache.hadoop" % "hadoop-client" % hadoopVersion % "compile" exclude("org.slf4j", "slf4j-api") excludeAll ExclusionRule("javax.servlet")
+  "org.apache.hadoop" % "hadoop-client" % hadoopVersion % "provided" exclude("org.slf4j", "slf4j-api") excludeAll ExclusionRule("javax.servlet")
 )
-
-run in Compile <<= Defaults.runTask(fullClasspath in Compile, mainClass in(Compile, run), runner in(Compile, run))
 
 fork := true //http://stackoverflow.com/questions/27824281/sparksql-missingrequirementerror-when-registering-table
 
 parallelExecution in Test := false
 
 headers := Map(
-  "scala" -> (HeaderPattern.cStyleBlockComment, Apache2_0("2015", "David Greco")._2),
-  "conf"  -> (HeaderPattern.hashLineComment, Apache2_0("2015", "David Greco")._2)
+  "scala" ->(HeaderPattern.cStyleBlockComment, Apache2_0("2015", "David Greco")._2),
+  "conf" ->(HeaderPattern.hashLineComment, Apache2_0("2015", "David Greco")._2)
 )
-
-evictionWarningOptions in update := EvictionWarningOptions.default
-  .withWarnTransitiveEvictions(warnTransitiveEvictions = false)
-  .withWarnDirectEvictions(warnDirectEvictions = false)
-  .withWarnScalaVersionEviction(warnScalaVersionEviction = false)
 
 lazy val root = (project in file(".")).
   configs(IntegrationTest).
   settings(Defaults.itSettings: _*).
   settings(
-    libraryDependencies += "org.scalatest" % "scalatest_2.10" % scalaTestVersion % "it,test"
-  ).enablePlugins(AutomateHeaderPlugin)
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % scalaTestVersion % "it,test"
+    )
+  ).enablePlugins(AutomateHeaderPlugin).disablePlugins(AssemblyPlugin)
+
+lazy val assembly_ = (project in file("assembly")).
+  settings(
+    assemblyJarName in assembly := s"spark-kite-assembly-${version.value}.jar", //assembly-assembly-0.1-SNAPSHOT.jar
+    libraryDependencies ++= Seq(
+      "org.kitesdk" % "kite-data-core" % kiteVersion % "compile",
+      "org.kitesdk" % "kite-data-mapreduce" % kiteVersion % "compile",
+      "com.databricks" %% "spark-avro" % sparkAvroVersion % "compile" excludeAll ExclusionRule(organization = "org.apache.avro"),
+      "org.apache.avro" % "avro" % avroVersion % "compile" exclude("org.mortbay.jetty", "servlet-api") exclude("io.netty", "netty") exclude("org.apache.avro", "avro-ipc") exclude("org.mortbay.jetty", "jetty"),
+      "org.apache.avro" % "avro-mapred" % avroVersion % "compile" classifier "hadoop2" exclude("org.mortbay.jetty", "servlet-api") exclude("io.netty", "netty") exclude("org.apache.avro", "avro-ipc") exclude("org.mortbay.jetty", "jetty")
+    )
+  ) dependsOn root settings (
+  projectDependencies := {
+    Seq(
+      (projectID in root).value.excludeAll(ExclusionRule(organization = "org.apache.spark"))
+    )
+  })
 
 AutomateHeaderPlugin.automateFor(IntegrationTest)
 
