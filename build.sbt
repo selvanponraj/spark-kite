@@ -63,7 +63,7 @@ libraryDependencies ++= Seq(
   "com.databricks" % "spark-avro_2.10" % sparkAvroVersion % "compile" excludeAll ExclusionRule(organization = "org.apache.avro"),
   "org.apache.avro" % "avro" % avroVersion % "compile" exclude("org.mortbay.jetty", "servlet-api") exclude("io.netty", "netty") exclude("org.apache.avro", "avro-ipc") exclude("org.mortbay.jetty", "jetty"),
   "org.apache.avro" % "avro-mapred" % avroVersion % "compile" classifier "hadoop2" exclude("org.mortbay.jetty", "servlet-api") exclude("io.netty", "netty") exclude("org.apache.avro", "avro-ipc") exclude("org.mortbay.jetty", "jetty"),
-  "org.apache.hadoop" % "hadoop-client" % hadoopVersion % "compile" excludeAll ExclusionRule("javax.servlet")
+  "org.apache.hadoop" % "hadoop-client" % hadoopVersion % "compile" exclude("org.slf4j", "slf4j-api") excludeAll ExclusionRule("javax.servlet")
 )
 
 run in Compile <<= Defaults.runTask(fullClasspath in Compile, mainClass in(Compile, run), runner in(Compile, run))
@@ -90,3 +90,5 @@ lazy val root = (project in file(".")).
   ).enablePlugins(AutomateHeaderPlugin)
 
 AutomateHeaderPlugin.automateFor(IntegrationTest)
+
+net.virtualvoid.sbt.graph.Plugin.graphSettings
