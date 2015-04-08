@@ -69,7 +69,7 @@ val kiteVersion = "1.0.0-cdh5.4.0"
 
 val scalaTestVersion = "2.2.4"
 
-resolvers ++= Seq(
+resolvers in ThisBuild ++= Seq(
   "cloudera" at "https://repository.cloudera.com/artifactory/cloudera-repos/"
 )
 
