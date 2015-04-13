@@ -47,7 +47,7 @@ class SparkKiteSpec extends WordSpec with MustMatchers with BeforeAndAfterAll wi
 
       cleanup()
 
-      val products = generateDataset(Formats.PARQUET, CompressionType.Uncompressed)
+      val products = generateDataset(Formats.PARQUET, CompressionType.Snappy)
 
       implicit val sqlContext = new SQLContext(sparkContext)
 
@@ -73,7 +73,7 @@ class SparkKiteSpec extends WordSpec with MustMatchers with BeforeAndAfterAll wi
 
       cleanup()
 
-      val products = generateDataset(Formats.AVRO, CompressionType.Uncompressed)
+      val products = generateDataset(Formats.AVRO, CompressionType.Snappy)
 
       implicit val sqlContext = new SQLContext(sparkContext)
 
@@ -110,7 +110,7 @@ class SparkKiteSpec extends WordSpec with MustMatchers with BeforeAndAfterAll wi
 
       val teenagers = sqlContext.sql("SELECT * FROM people WHERE age >= 13 AND age <= 19")
 
-      val dataset = KiteDatasetSaver.saveAsKiteDataset(teenagers, datasetURI, Formats.PARQUET, CompressionType.Uncompressed)
+      val dataset = KiteDatasetSaver.saveAsKiteDataset(teenagers, datasetURI, Formats.PARQUET, CompressionType.Snappy)
       val reader = dataset.newReader()
 
       import collection.JavaConversions._
@@ -138,7 +138,7 @@ class SparkKiteSpec extends WordSpec with MustMatchers with BeforeAndAfterAll wi
 
       val teenagers = sqlContext.sql("SELECT * FROM people WHERE age >= 13 AND age <= 19")
 
-      val dataset = KiteDatasetSaver.saveAsKiteDataset(teenagers, datasetURI, Formats.AVRO, CompressionType.Uncompressed)
+      val dataset = KiteDatasetSaver.saveAsKiteDataset(teenagers, datasetURI, Formats.AVRO)
       val reader = dataset.newReader()
 
       import collection.JavaConversions._
@@ -159,7 +159,7 @@ class SparkKiteSpec extends WordSpec with MustMatchers with BeforeAndAfterAll wi
 
       val datasetURI = URIBuilder.build(s"repo:file:////${System.getProperty("user.dir")}/tmp", "test", "persons")
 
-      val descriptor = new DatasetDescriptor.Builder().schema(classOf[Person]).format(Formats.AVRO).compressionType(CompressionType.Uncompressed).build()
+      val descriptor = new DatasetDescriptor.Builder().schema(classOf[Person]).format(Formats.AVRO).build()
 
       val peopleDataset = Datasets.create[Person, Dataset[Person]](datasetURI, descriptor, classOf[Person])
 
