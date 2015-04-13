@@ -75,7 +75,8 @@ class SparkKiteIntegrationTestSpec extends WordSpec with MustMatchers with Befor
 
       val writer = peopleDataset.newWriter()
 
-      val peopleList = (1 to 1000).map(i => ITPerson(s"person-$i", Random.nextInt(80)))
+      val n = 10000
+      val peopleList = (1 to n).map(i => ITPerson(s"person-$i", Random.nextInt(n)))
       peopleList.foreach(writer.write)
       writer.close()
 
