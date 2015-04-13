@@ -77,13 +77,15 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % sparkVersion % "compile" excludeAll ExclusionRule(organization = "org.apache.hadoop"),
   "org.apache.spark" %% "spark-sql" % sparkVersion % "compile" excludeAll ExclusionRule(organization = "org.apache.hadoop"),
   "org.apache.spark" %% "spark-yarn" % sparkVersion % "compile" excludeAll ExclusionRule(organization = "org.apache.hadoop"),
-  "org.kitesdk" % "kite-data-core" % kiteVersion % "compile",
-  "org.kitesdk" % "kite-data-mapreduce" % kiteVersion % "compile",
-  "com.databricks" %% "spark-avro" % sparkAvroVersion % "compile" excludeAll ExclusionRule(organization = "org.apache.avro"),
-  "org.apache.avro" % "avro" % avroVersion % "compile" exclude("org.mortbay.jetty", "servlet-api") exclude("io.netty", "netty") exclude("org.apache.avro", "avro-ipc") exclude("org.mortbay.jetty", "jetty"),
-  "org.apache.avro" % "avro-mapred" % avroVersion % "compile" classifier "hadoop2" exclude("org.mortbay.jetty", "servlet-api") exclude("io.netty", "netty") exclude("org.apache.avro", "avro-ipc") exclude("org.mortbay.jetty", "jetty"),
+  "org.kitesdk" % "kite-data-core" % kiteVersion % "provided",
+  "org.kitesdk" % "kite-data-mapreduce" % kiteVersion % "provided",
+  "com.databricks" %% "spark-avro" % sparkAvroVersion % "provided" excludeAll ExclusionRule(organization = "org.apache.avro"),
+  "org.apache.avro" % "avro" % avroVersion % "provided" exclude("org.mortbay.jetty", "servlet-api") exclude("io.netty", "netty") exclude("org.apache.avro", "avro-ipc") exclude("org.mortbay.jetty", "jetty"),
+  "org.apache.avro" % "avro-mapred" % avroVersion % "provided" classifier "hadoop2" exclude("org.mortbay.jetty", "servlet-api") exclude("io.netty", "netty") exclude("org.apache.avro", "avro-ipc") exclude("org.mortbay.jetty", "jetty"),
   "org.apache.hadoop" % "hadoop-client" % hadoopVersion % "provided" exclude("org.slf4j", "slf4j-api") excludeAll ExclusionRule("javax.servlet")
 )
+
+run in Compile <<= Defaults.runTask(fullClasspath in Compile, mainClass in(Compile, run), runner in(Compile, run)) //http://stackoverflow.com/questions/18838944/how-to-add-provided-dependencies-back-to-run-test-tasks-classpath/21803413#21803413
 
 fork := true //http://stackoverflow.com/questions/27824281/sparksql-missingrequirementerror-when-registering-table
 
