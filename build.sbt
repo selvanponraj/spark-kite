@@ -105,7 +105,8 @@ lazy val root = (project in file(".")).
 
 lazy val assembly_ = (project in file("assembly")).
   settings(
-    assemblyJarName in assembly := s"spark-kite-assembly-${version.value}.jar", //assembly-assembly-0.1-SNAPSHOT.jar
+    ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) },
+    assemblyJarName in assembly := s"spark-kite-assembly-${version.value}.jar",
     libraryDependencies ++= Seq(
       "org.kitesdk" % "kite-data-core" % kiteVersion % "compile",
       "org.kitesdk" % "kite-data-mapreduce" % kiteVersion % "compile",
