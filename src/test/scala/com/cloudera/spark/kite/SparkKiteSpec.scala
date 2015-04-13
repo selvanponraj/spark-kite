@@ -23,11 +23,7 @@ import org.scalatest.{ BeforeAndAfterAll, MustMatchers, WordSpec }
 
 import scala.util.Random
 
-case class Person(name: String, age: Int) {
-  def this() {
-    this(null, 0)
-  }
-}
+case class Person(name: String, age: Int)
 
 class SparkKiteSpec extends WordSpec with MustMatchers with BeforeAndAfterAll with TestSupport {
 
@@ -105,7 +101,7 @@ class SparkKiteSpec extends WordSpec with MustMatchers with BeforeAndAfterAll wi
       val datasetURI = URIBuilder.build(s"repo:file:////${System.getProperty("user.dir")}/tmp", "test", "persons")
 
       val peopleList = List(Person("David", 50), Person("Ruben", 14), Person("Giuditta", 12), Person("Vita", 19))
-      val people = sparkContext.parallelize[Person](peopleList).toDF
+      val people = sparkContext.parallelize[Person](peopleList).toDF()
       people.registerTempTable("people")
 
       val teenagers = sqlContext.sql("SELECT * FROM people WHERE age >= 13 AND age <= 19")
@@ -133,7 +129,7 @@ class SparkKiteSpec extends WordSpec with MustMatchers with BeforeAndAfterAll wi
       val datasetURI = URIBuilder.build(s"repo:file:////${System.getProperty("user.dir")}/tmp", "test", "persons")
 
       val peopleList = List(Person("David", 50), Person("Ruben", 14), Person("Giuditta", 12), Person("Vita", 19))
-      val people = sparkContext.parallelize[Person](peopleList).toDF
+      val people = sparkContext.parallelize[Person](peopleList).toDF()
       people.registerTempTable("people")
 
       val teenagers = sqlContext.sql("SELECT * FROM people WHERE age >= 13 AND age <= 19")
