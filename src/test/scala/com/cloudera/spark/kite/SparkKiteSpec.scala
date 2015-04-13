@@ -16,6 +16,8 @@
 
 package com.cloudera.spark.kite
 
+import org.apache.avro.generic.GenericData.Record
+import org.apache.avro.generic.GenericRecordBuilder
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.{ SparkConf, SparkContext }
 import org.kitesdk.data._
@@ -168,6 +170,45 @@ class SparkKiteSpec extends WordSpec with MustMatchers with BeforeAndAfterAll wi
       val data = sqlContext.kiteDatasetFile(peopleDataset)
 
       data.collect().sortBy(_.getAs[String](0).split("-")(1).toInt).map(row => Person(row.getAs[String](0), row.getAs[Int](1))) must be(peopleList)
+
+      cleanup()
+
+    }
+  }
+
+  "Spark" must {
+    "be able to create a SchemaRDD/Dataframe from a partitioned kite avro dataset" in {
+
+      cleanup()
+
+      val sqlContext = new SQLContext(sparkContext)
+
+      val partitionStrategy = new PartitionStrategy.Builder().identity("favoriteColor", "favorite_color").build()
+
+      val datasetURI = URIBuilder.build(s"repo:file:////${System.getProperty("user.dir")}/tmp", "test", "users")
+
+      val descriptor = new DatasetDescriptor.Builder().schemaUri("resource:user.avsc").partitionStrategy(partitionStrategy).format(Formats.AVRO).build()
+
+      val userDataset = Datasets.create[Record, Dataset[Record]](datasetURI, descriptor, classOf[Record])
+
+      val colors = Array[String]("green", "blue", "pink", "brown", "yellow")
+      val rand = new Random()
+      val builder = new GenericRecordBuilder(descriptor.getSchema())
+      val users = for {
+        i <- 0 until 100
+        fields = ("user-" + i, System.currentTimeMillis(), colors(rand.nextInt(colors.length)))
+      } yield fields
+
+      val writer = userDataset.newWriter()
+      users.foreach(fields => {
+        val record = builder.set("username", fields._1).set("creationDate", fields._2).set("favoriteColor", fields._3).build()
+        writer.write(record)
+      })
+      writer.close()
+
+      val data = sqlContext.kiteDatasetFile(userDataset)
+      data.collect().sortBy(_.getAs[String](0).split("-")(1).toInt).
+        map(record => (record.getAs[String](0), record.getAs[Long](1), record.getAs[String](2))) must be(users)
 
       cleanup()
 
