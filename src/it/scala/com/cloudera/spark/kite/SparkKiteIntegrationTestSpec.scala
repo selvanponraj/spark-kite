@@ -17,7 +17,7 @@
 package com.cloudera.spark.kite
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.{SparkConf, SparkContext}
 import org.kitesdk.data._
@@ -35,11 +35,23 @@ class SparkKiteIntegrationTestSpec extends WordSpec with MustMatchers with Befor
   var sparkContext: SparkContext = _
 
   override def beforeAll() = {
+
+    val fs = FileSystem.get(new Configuration())
+    val assembly = s"/user/${System.getProperty("user.name")}/spark-assembly.jar"
+    if (fs.exists(new Path(assembly)))
+      fs.delete(new Path(assembly), true)
+    fs.copyFromLocalFile(
+      false,
+      true,
+      new Path(s"file://${System.getProperty("user.dir")}/spark_assembly/spark-assembly_2.10-1.3.0-cdh5.4.0.jar"),
+      new Path(s"/user/${System.getProperty("user.name")}/spark-assembly.jar")
+    )
+
     val conf = new SparkConf().
       setAppName("spark-kite-integration-test").
       set("executor-memory", "128m").
       setJars(List(s"${System.getProperty("user.dir")}/assembly/target/scala-2.10/spark-kite-assembly-1.0.jar")).
-      set("spark.yarn.jar", "hdfs:///user/spark/share/lib/spark-assembly.jar").
+      set("spark.yarn.jar", s"hdfs:///user/${System.getProperty("user.name")}/spark-assembly.jar").
       setMaster("yarn-client")
     sparkContext = new SparkContext(conf)
   }
