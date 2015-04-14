@@ -17,7 +17,7 @@
 package com.cloudera.spark.kite
 
 import org.apache.avro.generic.GenericData.Record
-import org.apache.avro.generic.GenericRecordBuilder
+import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.{ SparkConf, SparkContext }
 import org.kitesdk.data._
@@ -47,9 +47,9 @@ class SparkKiteSpec extends WordSpec with MustMatchers with BeforeAndAfterAll wi
 
       cleanup()
 
-      val products = generateDataset(Formats.PARQUET, CompressionType.Snappy)
+      val products: Dataset[GenericRecord] = generateDataset(Formats.PARQUET, CompressionType.Snappy)
 
-      implicit val sqlContext = new SQLContext(sparkContext)
+      val sqlContext = new SQLContext(sparkContext)
 
       val data = sqlContext.kiteDatasetFile(products)
 
@@ -75,7 +75,7 @@ class SparkKiteSpec extends WordSpec with MustMatchers with BeforeAndAfterAll wi
 
       val products = generateDataset(Formats.AVRO, CompressionType.Snappy)
 
-      implicit val sqlContext = new SQLContext(sparkContext)
+      val sqlContext = new SQLContext(sparkContext)
 
       val data = sqlContext.kiteDatasetFile(products)
 
