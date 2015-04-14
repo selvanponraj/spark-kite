@@ -37,7 +37,7 @@ object KiteDatasetSaver extends SchemaSupport {
     val job = Job.getInstance()
 
     //TODO this is an hack, the partitioning strategy only works with primitive type not nullable, if the schema has been built using reflection from a case class for example, the primitive tyoe are nullable in the avro schema
-    //breaking the parition strategy, so in case the partition strategy is defined I change nullable to false, it seems working.
+    //breaking the partition strategy, so in case the partition strategy is defined I change nullable to false, it seems working.
     val schema = partitionStrategy.fold(dataFrame.schema)(_ => StructType(dataFrame.schema.iterator.map(field => if (field.nullable) field.copy(nullable = false) else field).toArray))
     val avroSchema = getSchema(schema)
     val descriptor = partitionStrategy.fold(new DatasetDescriptor.Builder().schema(avroSchema).format(format).compressionType(compressionType).build())(p => new DatasetDescriptor.Builder().schema(avroSchema).format(format).compressionType(compressionType).partitionStrategy(p).build())
