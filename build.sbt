@@ -73,17 +73,24 @@ resolvers in ThisBuild ++= Seq(
   "cloudera" at "https://repository.cloudera.com/artifactory/cloudera-repos/"
 )
 
+val isALibrary = true //this is a library project
+lazy val scope = if (isALibrary) "compile" else "provided" /*if it's a library the scope is "compile" since we want the transitive dependencies on the library
+                                                             otherwise we set up the scope to "provided" because those dependencies will be assembled in the "assembly"*/
+
+val assemblyDependencies = (scope: String) => Seq(
+  "org.kitesdk" % "kite-data-core" % kiteVersion % scope,
+  "org.kitesdk" % "kite-data-mapreduce" % kiteVersion % scope,
+  "com.databricks" %% "spark-avro" % sparkAvroVersion % scope excludeAll ExclusionRule(organization = "org.apache.avro"),
+  "org.apache.avro" % "avro" % avroVersion % scope exclude("org.mortbay.jetty", "servlet-api") exclude("io.netty", "netty") exclude("org.apache.avro", "avro-ipc") exclude("org.mortbay.jetty", "jetty"),
+  "org.apache.avro" % "avro-mapred" % avroVersion % scope classifier "hadoop2" exclude("org.mortbay.jetty", "servlet-api") exclude("io.netty", "netty") exclude("org.apache.avro", "avro-ipc") exclude("org.mortbay.jetty", "jetty")
+)
+
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % sparkVersion % "compile" excludeAll ExclusionRule(organization = "org.apache.hadoop"),
   "org.apache.spark" %% "spark-sql" % sparkVersion % "compile" excludeAll ExclusionRule(organization = "org.apache.hadoop"),
   "org.apache.spark" %% "spark-yarn" % sparkVersion % "compile" excludeAll ExclusionRule(organization = "org.apache.hadoop"),
-  "org.kitesdk" % "kite-data-core" % kiteVersion % "provided",
-  "org.kitesdk" % "kite-data-mapreduce" % kiteVersion % "provided",
-  "com.databricks" %% "spark-avro" % sparkAvroVersion % "provided" excludeAll ExclusionRule(organization = "org.apache.avro"),
-  "org.apache.avro" % "avro" % avroVersion % "provided" exclude("org.mortbay.jetty", "servlet-api") exclude("io.netty", "netty") exclude("org.apache.avro", "avro-ipc") exclude("org.mortbay.jetty", "jetty"),
-  "org.apache.avro" % "avro-mapred" % avroVersion % "provided" classifier "hadoop2" exclude("org.mortbay.jetty", "servlet-api") exclude("io.netty", "netty") exclude("org.apache.avro", "avro-ipc") exclude("org.mortbay.jetty", "jetty"),
-  "org.apache.hadoop" % "hadoop-client" % hadoopVersion % "provided" exclude("org.slf4j", "slf4j-api") excludeAll ExclusionRule("javax.servlet")
-)
+  "org.apache.hadoop" % "hadoop-client" % hadoopVersion % (if (isALibrary) "provided" else "compile") exclude("org.slf4j", "slf4j-api") excludeAll ExclusionRule("javax.servlet")
+) ++ assemblyDependencies(scope)
 
 run in Compile <<= Defaults.runTask(fullClasspath in Compile, mainClass in(Compile, run), runner in(Compile, run)) //http://stackoverflow.com/questions/18838944/how-to-add-provided-dependencies-back-to-run-test-tasks-classpath/21803413#21803413
 
@@ -107,19 +114,15 @@ lazy val root = (project in file(".")).
 
 lazy val assembly_ = (project in file("assembly")).
   settings(
-    ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) },
+    ivyScala := ivyScala.value map {
+      _.copy(overrideScalaVersion = true)
+    },
     assemblyJarName in assembly := s"spark-kite-assembly-${version.value}.jar",
-    libraryDependencies ++= Seq(
-      "org.kitesdk" % "kite-data-core" % kiteVersion % "compile",
-      "org.kitesdk" % "kite-data-mapreduce" % kiteVersion % "compile",
-      "com.databricks" %% "spark-avro" % sparkAvroVersion % "compile" excludeAll ExclusionRule(organization = "org.apache.avro"),
-      "org.apache.avro" % "avro" % avroVersion % "compile" exclude("org.mortbay.jetty", "servlet-api") exclude("io.netty", "netty") exclude("org.apache.avro", "avro-ipc") exclude("org.mortbay.jetty", "jetty"),
-      "org.apache.avro" % "avro-mapred" % avroVersion % "compile" classifier "hadoop2" exclude("org.mortbay.jetty", "servlet-api") exclude("io.netty", "netty") exclude("org.apache.avro", "avro-ipc") exclude("org.mortbay.jetty", "jetty")
-    )
+    libraryDependencies ++= assemblyDependencies("compile")
   ) dependsOn root settings (
   projectDependencies := {
     Seq(
-      (projectID in root).value.excludeAll(ExclusionRule(organization = "org.apache.spark"))
+      (projectID in root).value.excludeAll(ExclusionRule(organization = "org.apache.spark"), if (!isALibrary) ExclusionRule(organization = "org.apache.hadoop") else ExclusionRule())
     )
   })
 
