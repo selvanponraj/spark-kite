@@ -1,0 +1,2 @@
+# [Spark Kite](http://www.davidgreco.me/blog/2015/04/14/spark-slash-kite-integration/)
+A prototype library for saving/reading [Kite](http://www.kitesdk.org) datasets as [Spark](http://spark.apache.org) Dataframes.
