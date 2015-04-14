@@ -29,9 +29,9 @@ import org.apache.spark.sql.{ DataFrame, Row }
 import scala.collection.JavaConversions._
 
 trait SchemaSupport {
-  def getSchema(dataFrame: DataFrame): Schema = {
+  def getSchema(structType: StructType): Schema = {
     val builder = SchemaBuilder.record("topLevelRecord")
-    val schema: Schema = SchemaConverters.convertStructToAvro(dataFrame.schema, builder)
+    val schema: Schema = SchemaConverters.convertStructToAvro(structType, builder)
     schema
   }
 

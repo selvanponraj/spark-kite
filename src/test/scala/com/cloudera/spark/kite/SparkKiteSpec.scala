@@ -27,6 +27,8 @@ import scala.util.Random
 
 case class Person(name: String, age: Int)
 
+case class User(name: String, creationDate: Long, favoriteColor: String)
+
 class SparkKiteSpec extends WordSpec with MustMatchers with BeforeAndAfterAll with TestSupport {
 
   var sparkContext: SparkContext = _
@@ -209,6 +211,35 @@ class SparkKiteSpec extends WordSpec with MustMatchers with BeforeAndAfterAll wi
       val data = sqlContext.kiteDatasetFile(userDataset)
       data.collect().sortBy(_.getAs[String](0).split("-")(1).toInt).
         map(record => (record.getAs[String](0), record.getAs[Long](1), record.getAs[String](2))) must be(users)
+
+      cleanup()
+
+    }
+  }
+
+  "Spark" must {
+    "be able to create a partitioned kite avro dataset from a SchemaRDD/Dataframe" in {
+
+      cleanup()
+
+      val sqlContext = new SQLContext(sparkContext)
+      import sqlContext.implicits._
+
+      val datasetURI = URIBuilder.build(s"repo:file:////${System.getProperty("user.dir")}/tmp", "test", "users")
+
+      val colors = Array[String]("green", "blue", "pink", "brown", "yellow")
+      val rand = new Random()
+      val usersList = (1 to 100).map(i => User("user-" + i, System.currentTimeMillis(), colors(rand.nextInt(colors.length))))
+      val users = sparkContext.parallelize[User](usersList).toDF()
+      users.registerTempTable("user")
+
+      val partitionStrategy = new PartitionStrategy.Builder().identity("favoriteColor", "favorite_color").build()
+      val dataset = KiteDatasetSaver.saveAsKiteDataset(users, datasetURI, format = Formats.AVRO, partitionStrategy = Some(partitionStrategy))
+
+      val reader = dataset.newReader()
+      import collection.JavaConversions._
+      reader.iterator().toList.sortBy(_.get(0).toString().split("-")(1).toInt).map(record => User(record.get(0).toString, record.get(1).asInstanceOf[Long], record.get(2).toString)) must be(usersList)
+      reader.close()
 
       cleanup()
 

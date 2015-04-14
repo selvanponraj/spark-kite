@@ -19,7 +19,6 @@ package com.cloudera.spark.kite
 import java.net.URI
 
 import com.databricks.spark.avro.{ AvroSaver, SchemaSupport }
-import org.apache.avro.SchemaBuilder
 import org.apache.avro.generic.GenericData.Record
 import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.sql.types.StructType
@@ -33,13 +32,15 @@ object KiteDatasetSaver extends SchemaSupport {
     rows.map(x => (converter(x).asInstanceOf[Record], null))
   }
 
-  def saveAsKiteDataset(dataFrame: DataFrame, uri: URI, format: Format = Formats.AVRO, compressionType: CompressionType = CompressionType.Snappy): Dataset[Record] = {
+  def saveAsKiteDataset(dataFrame: DataFrame, uri: URI, format: Format = Formats.AVRO, compressionType: CompressionType = CompressionType.Snappy, partitionStrategy: Option[PartitionStrategy] = None): Dataset[Record] = {
     assert(URIBuilder.DATASET_SCHEME == uri.getScheme, s"Not a dataset or view URI: $uri" + "")
     val job = Job.getInstance()
-    val builder = SchemaBuilder.record("topLevelRecord")
-    val schema = dataFrame.schema
-    val avroSchema = getSchema(dataFrame)
-    val descriptor = new DatasetDescriptor.Builder().schema(avroSchema).format(format).compressionType(compressionType).build()
+
+    //TODO this is an hack, the partitioning strategy only works with primitive type not nullable, if the schema has been built using reflection from a case class for example, the primitive tyoe are nullable in the avro schema
+    //breaking the parition strategy, so in case the partition strategy is defined I change nullable to false, it seems working.
+    val schema = partitionStrategy.fold(dataFrame.schema)(_ => StructType(dataFrame.schema.iterator.map(field => if (field.nullable) field.copy(nullable = false) else field).toArray))
+    val avroSchema = getSchema(schema)
+    val descriptor = partitionStrategy.fold(new DatasetDescriptor.Builder().schema(avroSchema).format(format).compressionType(compressionType).build())(p => new DatasetDescriptor.Builder().schema(avroSchema).format(format).compressionType(compressionType).partitionStrategy(p).build())
     val dataset = Datasets.create[Record, Dataset[Record]](uri, descriptor, classOf[Record])
     DatasetKeyOutputFormat.configure(job).writeTo(dataset)
     dataFrame.mapPartitions(rowsToAvro(_, schema)).saveAsNewAPIHadoopDataset(job.getConfiguration)
