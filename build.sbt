@@ -20,6 +20,8 @@ import sbt._
 
 name := "spark-kite"
 
+organization := "com.cloudera.spark"
+
 version in ThisBuild := "1.0"
 
 scalaVersion := "2.10.5"
