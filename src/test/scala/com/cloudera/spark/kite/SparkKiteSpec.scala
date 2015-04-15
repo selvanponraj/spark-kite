@@ -17,7 +17,7 @@
 package com.cloudera.spark.kite
 
 import org.apache.avro.generic.GenericData.Record
-import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
+import org.apache.avro.generic.{ GenericRecord, GenericRecordBuilder }
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.{ SparkConf, SparkContext }
 import org.kitesdk.data._

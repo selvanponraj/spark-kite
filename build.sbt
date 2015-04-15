@@ -80,16 +80,20 @@ lazy val scope = if (isALibrary) "compile" else "provided" /*if it's a library t
 val assemblyDependencies = (scope: String) => Seq(
   "org.kitesdk" % "kite-data-core" % kiteVersion % scope,
   "org.kitesdk" % "kite-data-mapreduce" % kiteVersion % scope,
-  "com.databricks" %% "spark-avro" % sparkAvroVersion % scope excludeAll ExclusionRule(organization = "org.apache.avro"),
+  "com.databricks" %% "spark-avro" % sparkAvroVersion % scope exclude("org.apache.avro", "avro") exclude("org.apache.avro", "avro-mapred"),
   "org.apache.avro" % "avro" % avroVersion % scope exclude("org.mortbay.jetty", "servlet-api") exclude("io.netty", "netty") exclude("org.apache.avro", "avro-ipc") exclude("org.mortbay.jetty", "jetty"),
   "org.apache.avro" % "avro-mapred" % avroVersion % scope classifier "hadoop2" exclude("org.mortbay.jetty", "servlet-api") exclude("io.netty", "netty") exclude("org.apache.avro", "avro-ipc") exclude("org.mortbay.jetty", "jetty")
 )
 
+val sparkExcludes = (moduleId: ModuleID) => moduleId.exclude("org.apache.hadoop", "hadoop-client").exclude("org.apache.hadoop", "hadoop-yarn-client").exclude("org.apache.hadoop", "hadoop-yarn-api").exclude("org.apache.hadoop", "hadoop-yarn-common").exclude("org.apache.hadoop", "hadoop-yarn-server-common").exclude("org.apache.hadoop", "hadoop-yarn-server-web-proxy")
+
+val hadoopClientExcludes = (moduleId: ModuleID) => moduleId.exclude("org.slf4j", "slf4j-api").exclude("javax.servlet","servlet-api")
+
 libraryDependencies ++= Seq(
-  "org.apache.spark" %% "spark-core" % sparkVersion % "compile" excludeAll ExclusionRule(organization = "org.apache.hadoop"),
-  "org.apache.spark" %% "spark-sql" % sparkVersion % "compile" excludeAll ExclusionRule(organization = "org.apache.hadoop"),
-  "org.apache.spark" %% "spark-yarn" % sparkVersion % "compile" excludeAll ExclusionRule(organization = "org.apache.hadoop"),
-  "org.apache.hadoop" % "hadoop-client" % hadoopVersion % (if (isALibrary) "provided" else "compile") exclude("org.slf4j", "slf4j-api") excludeAll ExclusionRule("javax.servlet")
+  sparkExcludes("org.apache.spark" %% "spark-core" % sparkVersion % "compile"),
+  sparkExcludes("org.apache.spark" %% "spark-sql" % sparkVersion % "compile"),
+  sparkExcludes("org.apache.spark" %% "spark-yarn" % sparkVersion % "compile"),
+  hadoopClientExcludes("org.apache.hadoop" % "hadoop-client" % hadoopVersion % (if (isALibrary) "provided" else "compile"))
 ) ++ assemblyDependencies(scope)
 
 run in Compile <<= Defaults.runTask(fullClasspath in Compile, mainClass in(Compile, run), runner in(Compile, run)) //http://stackoverflow.com/questions/18838944/how-to-add-provided-dependencies-back-to-run-test-tasks-classpath/21803413#21803413
