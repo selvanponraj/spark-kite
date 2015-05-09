@@ -55,8 +55,8 @@ wartremoverErrors ++= Seq(
   Wart.OptionPartial,
   Wart.Product,
   Wart.Serializable,
-  Wart.ListOps,
-  Wart.Nothing
+  Wart.ListOps//,
+//  Wart.Nothing
 )
 
 val sparkVersion = "1.3.0-cdh5.4.0"

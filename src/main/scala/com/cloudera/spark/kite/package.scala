@@ -30,7 +30,7 @@ package object kite extends SchemaSupport {
       val job = Job.getInstance()
       DatasetKeyInputFormat.configure(job).readFrom(dataSet).withType(classOf[GenericRecord])
       val rdd = sqlContext.sparkContext.newAPIHadoopRDD(job.getConfiguration, classOf[DatasetKeyInputFormat[GenericRecord]], classOf[GenericRecord], classOf[Void])
-      val converter = createConverter(dataSet.getDescriptor.getSchema)
+      val converter = createConverter(sqlContext, dataSet.getDescriptor.getSchema)
       val rel = rdd.map(record => converter(record._1).asInstanceOf[Row])
       sqlContext.createDataFrame(rel, getSchemaType(dataSet.getDescriptor.getSchema))
     }
